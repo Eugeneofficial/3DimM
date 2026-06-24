@@ -4,6 +4,11 @@ import { join } from 'path';
 import { mkdir, unlink, stat } from 'fs/promises';
 import { createReadStream } from 'fs';
 import { createServer } from 'net';
+import { createRequire } from 'module';
+import { assertNotPrivate } from './security.js';
+import { log } from './logger.js';
+
+const require = createRequire(import.meta.url);
 
 // Единственное место для дефолтов — используется и сервером, и Electron.
 export const DEFAULT_PORT = parseInt(process.env.DIMM_PORT || '3001', 10);
@@ -52,7 +57,7 @@ export async function findFreePort(preferred = DEFAULT_PORT, maxAttempts = 20) {
       // не падаем, а двигаемся дальше, чтобы пользователь получил UI.
       if (err && err.code !== 'EADDRINUSE' && err.code !== 'EACCES') {
         // Непредвиденная ошибка сети — логируем и продолжаем.
-        console.warn(`[port] probe ${port} failed: ${err.code || err.message}`);
+        log('warn', `[port] probe ${port} failed: ${err.code || err.message}`);
       }
     }
   }
@@ -94,10 +99,6 @@ function loadFfmpeg() {
   if (ffmpegPath) fluent.setFfmpegPath(ffmpegPath);
   return fluent;
 }
-
-// helper: динамический require для ESM-контекста
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 
 /* ============================ Парсинг m3u8 ============================ */
 
@@ -329,32 +330,6 @@ export async function testVariantSpeed(variantUrl, baseM3u8Url, timeout = 8000) 
   }
 }
 
-/* ============================ SSRF-защита ============================ */
-
-function isPrivateIP(hostname) {
-  if (!hostname) return false;
-  const h = hostname.toLowerCase();
-  if (h === 'localhost' || h === '0.0.0.0' || h === '::1' || h === '[::1]') return true;
-  if (/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (/^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (h === '[::ffff:127.0.0.1]' || h === '[::ffff:10.0.0.1]') return true;
-  return false;
-}
-
-function assertNotPrivate(urlStr) {
-  try {
-    const u = new URL(urlStr);
-    if (isPrivateIP(u.hostname)) {
-      throw new Error('Requests to private/local IPs are not allowed');
-    }
-  } catch (e) {
-    throw e;
-  }
-}
-
 /* ============================ Безопасность ============================ */
 
 // Санитизация имени файла: только латиница/цифры/_-. и пробел, длина ≤ 100, без разделителей пути.
@@ -533,7 +508,7 @@ export function createVideoRouter(opts = {}) {
 
       return res.json({ urls: [], source: 'none', error: 'No m3u8 URLs found on this page' });
     } catch (err) {
-      console.error('Extract error:', err.message);
+      log('error', 'Extract error:', err.message);
       res.status(500).json({ error: err.message });
     }
   });
@@ -600,7 +575,7 @@ export function createVideoRouter(opts = {}) {
       res.setHeader('Content-Type', respContentType || 'application/octet-stream');
       res.send(text);
     } catch (err) {
-      console.error('Proxy error:', err.message);
+      log('error', 'Proxy error:', err.message);
       res.status(500).json({ error: err.message });
     }
   });
@@ -782,7 +757,7 @@ export function createVideoRouter(opts = {}) {
         fastest: fastest ? fastest.fullUrl : url,
       });
     } catch (err) {
-      console.error('Speed test error:', err.message);
+      log('error', 'Speed test error:', err.message);
       res.status(500).json({ error: err.message });
     }
   });
@@ -865,12 +840,12 @@ export function createVideoRouter(opts = {}) {
     };
     if (onDownloadStart) onDownloadStart(info);
 
-    console.log('Downloading:', url);
+    log('info', 'Downloading:', url);
 
     // Принудительная остановка ffmpeg по таймауту.
     let cmdRef = null;
     const timeoutHandle = setTimeout(() => {
-      console.error('Download timeout reached, aborting');
+      log('error', 'Download timeout reached, aborting');
       downloadProgress.set(downloadId, { percent: 0, speed: null, status: 'error', error: 'timeout' });
       if (cmdRef && typeof cmdRef.kill === 'function') {
         try {
@@ -908,9 +883,9 @@ export function createVideoRouter(opts = {}) {
           .outputOptions(['-c', 'copy', '-movflags', 'faststart', '-y', '-max_muxing_queue_size', '1024'])
           .output(outputPath)
           .format('mp4')
-          .on('start', (cmdLine) => console.log('FFmpeg command:', cmdLine))
+          .on('start', (cmdLine) => log('info', 'FFmpeg command:', cmdLine))
           .on('progress', (p) => {
-            if (p.percent) console.log(`Progress: ${Math.round(p.percent)}%`);
+            if (p.percent) log('info', `Progress: ${Math.round(p.percent)}%`);
             const speed = p.currentSpeed ? `${(p.currentSpeed / 1000000).toFixed(1)} Мбит/с` : null;
             downloadProgress.set(downloadId, {
               percent: p.percent || 0,
@@ -920,12 +895,12 @@ export function createVideoRouter(opts = {}) {
             });
           })
           .on('end', () => {
-            console.log('Download complete');
+            log('info', 'Download complete');
             downloadProgress.set(downloadId, { percent: 100, speed: null, status: 'done' });
             resolve();
           })
           .on('error', (err) => {
-            console.error('FFmpeg error:', err.message);
+            log('error', 'FFmpeg error:', err.message);
             downloadProgress.set(downloadId, { percent: 0, speed: null, status: 'error', error: err.message });
             reject(err);
           });
@@ -961,7 +936,7 @@ export function createVideoRouter(opts = {}) {
       });
     } catch (err) {
       clearTimeout(timeoutHandle);
-      console.error('Download error:', err.message);
+      log('error', 'Download error:', err.message);
       downloadProgress.delete(downloadId);
       await cleanup();
       if (!res.headersSent) res.status(500).json({ error: err.message });

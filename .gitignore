@@ -5,22 +5,22 @@ dist-electron/
 .DS_Store
 Thumbs.db
 
-# Electron
+# Environment
 .env
-.env.local
+.env.*
+!.env.example
 
-# Временные загрузки сервера
+# Temp downloads
 server/downloads/*
 !server/downloads/.gitkeep
 client/downloads/*
 !client/downloads/.gitkeep
 
-# Settings (user-specific)
+# User-specific
 settings.json
 
 # Logs
 logs/
-*.log
 
 # Build artifacts
 *.tgz
@@ -34,7 +34,6 @@ logs/
 
 # OS
 desktop.ini
-Thumbs.db
 
 # Dev artifacts
 SESSION.md

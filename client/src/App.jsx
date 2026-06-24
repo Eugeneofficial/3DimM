@@ -239,11 +239,9 @@ const supportedSitesList = [
   'YouTube', 'TikTok', 'Twitter / X', 'Instagram', 'Facebook', 'Twitch',
   'VK Video', 'OK.ru', 'Rutube', 'Reddit', 'Vimeo', 'Dailymotion',
   'SoundCloud', 'Telegram', 'Discord', 'Pinterest', 'Tumblr', 'Flickr',
-  'Bandcamp', 'Break.com', 'Crunchyroll', 'Dailymotion', 'Facebook',
-  'Flickr', 'IGN', 'Imgur', 'Kickstarter', 'LinkedIn', 'Medium',
-  'Niconico', 'Odysee', 'OnlyFans', 'PeerTube', 'Pinterest', 'PornHub',
-  'Rumble', 'Streamable', 'Twitch', 'Twitter/X', 'Vimeo', 'Vine',
-  'VK', 'XboxClips', 'YouTube', 'TikTok', 'Instagram Reels', 'Snapchat',
+  'Bandcamp', 'Break.com', 'Crunchyroll', 'IGN', 'Imgur', 'Kickstarter',
+  'LinkedIn', 'Medium', 'Niconico', 'Odysee', 'OnlyFans', 'PeerTube',
+  'PornHub', 'Rumble', 'Streamable', 'Vine', 'XboxClips', 'Snapchat',
 ];
 
 function extractUrlFromText(text) {
@@ -316,23 +314,25 @@ export default function App() {
         showToast(errMsg, 'error');
         return;
       }
-      const data = await response.json();
-      if (data.id) {
-        evtSource = new EventSource(`/api/download/progress?id=${data.id}`);
-        evtSource.onmessage = (e) => {
-          try {
-            const p = JSON.parse(e.data);
-            if (p.status === 'done' || p.status === 'error') { evtSource.close(); setDownloadProgress(null); return; }
-            setDownloadProgress(p);
-          } catch {}
-        };
-        evtSource.onerror = () => { evtSource.close(); };
-      }
-      if (isElectron && data && data.path) {
-        const result = await window.electronAPI.saveFile(null, data.name || `video_${Date.now()}.mp4`, data.path);
-        if (!result || result.canceled) showToast('\u041E\u0442\u043C\u0435\u043D\u0430', 'info');
-        else showToast('\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E', 'success');
-        setDownloadedPath(data.path);
+      if (isElectron) {
+        const data = await response.json();
+        if (data.id) {
+          evtSource = new EventSource(`/api/download/progress?id=${data.id}`);
+          evtSource.onmessage = (e) => {
+            try {
+              const p = JSON.parse(e.data);
+              if (p.status === 'done' || p.status === 'error') { evtSource.close(); setDownloadProgress(null); return; }
+              setDownloadProgress(p);
+            } catch {}
+          };
+          evtSource.onerror = () => { evtSource.close(); };
+        }
+        if (data.path) {
+          const result = await window.electronAPI.saveFile(null, data.name || `video_${Date.now()}.mp4`, data.path);
+          if (!result || result.canceled) showToast('Отмена', 'info');
+          else showToast('Сохранено', 'success');
+          setDownloadedPath(data.path);
+        }
       } else {
         const blob = await response.blob();
         const a = document.createElement('a');
@@ -340,10 +340,10 @@ export default function App() {
         a.download = 'video.mp4';
         a.click();
         URL.revokeObjectURL(a.href);
-        showToast('\u0412\u0438\u0434\u0435\u043E \u0441\u043A\u0430\u0447\u0430\u043D\u043E', 'success');
+        showToast('Видео скачано', 'success');
       }
     } catch (err) {
-      showToast('\u274C ' + err.message, 'error');
+      showToast('❌ ' + err.message, 'error');
     } finally {
       if (evtSource) evtSource.close();
       setDownloading(false);
@@ -533,9 +533,9 @@ export default function App() {
         </div>
       )}
 
-      <Sidebar activeNav={activeNav} onNavChange={setActiveNav} />
+      <Sidebar activeNav={activeNav} onNavChange={setActiveNav} className="app-sidebar" />
 
-      <main style={styles.main}>
+      <main style={styles.main} className="app-main">
         {renderContent()}
       </main>
     </div>

@@ -78,48 +78,6 @@ const styles = {
     width: '20px',
     textAlign: 'center',
   },
-  premium: {
-    marginTop: 'auto',
-    padding: '20px',
-    borderRadius: radius.lg,
-    background: 'linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(99,102,241,0.08) 100%)',
-    border: `1px solid ${colors.premium}20`,
-  },
-  premiumIcon: {
-    fontSize: '24px',
-    marginBottom: '8px',
-  },
-  premiumTitle: {
-    fontSize: '13px',
-    fontWeight: 600,
-    color: colors.text,
-    marginBottom: '8px',
-  },
-  premiumFeatures: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    marginBottom: '12px',
-  },
-  premiumFeature: {
-    fontSize: '11px',
-    color: colors.textFaint,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-  },
-  premiumBtn: {
-    width: '100%',
-    padding: '8px',
-    fontSize: '12px',
-    fontWeight: 600,
-    background: colors.gradient,
-    color: '#fff',
-    border: 'none',
-    borderRadius: radius.sm,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
   themeToggle: {
     display: 'flex',
     alignItems: 'center',
@@ -132,9 +90,9 @@ const styles = {
   },
 };
 
-export default function Sidebar({ activeNav, onNavChange }) {
+export default function Sidebar({ activeNav, onNavChange, className }) {
   return (
-    <div style={styles.sidebar}>
+    <div style={styles.sidebar} className={className}>
       <div style={styles.logo}>
         <div style={styles.logoIcon}>{'\u2B07\uFE0F'}</div>
         <div>
@@ -165,16 +123,10 @@ export default function Sidebar({ activeNav, onNavChange }) {
         ))}
       </nav>
 
-      <div style={styles.premium}>
-        <div style={styles.premiumIcon}>{'\uD83D\uDC51'}</div>
-        <div style={styles.premiumTitle}>{'\u041F\u0435\u0440\u0435\u0439\u0442\u0438 \u043D\u0430 Premium'}</div>
-        <div style={styles.premiumFeatures}>
-          <div style={styles.premiumFeature}>{'\u2713'} {'\u0411\u0435\u0437\u043B\u0438\u043C\u0438\u0442\u043D\u044B\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438'}</div>
-          <div style={styles.premiumFeature}>{'\u2713'} {'\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0432 8K/4K'}</div>
-          <div style={styles.premiumFeature}>{'\u2713'} {'\u0411\u0435\u0437 \u0440\u0435\u043A\u043B\u0430\u043C\u044B'}</div>
-          <div style={styles.premiumFeature}>{'\u2713'} {'\u0412\u044B\u0441\u043E\u043A\u0430\u044F \u0441\u043A\u043E\u0440\u043E\u0441\u0442\u044C'}</div>
+      <div style={{ marginTop: 'auto', padding: '16px', borderTop: `1px solid ${colors.borderSoft}` }}>
+        <div style={{ fontSize: '11px', color: colors.textFaint, textAlign: 'center', lineHeight: 1.5 }}>
+          {'\u0421\u043A\u0430\u0447\u0438\u0432\u0430\u0439\u0442\u0435 \u0432\u0438\u0434\u0435\u043E \u0441 1000+ \u0441\u0430\u0439\u0442\u043E\u0432 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u043E'}
         </div>
-        <button style={styles.premiumBtn}>{'\u041F\u043E\u043F\u0440\u043E\u0431\u043E\u0432\u0430\u0442\u044C \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u043E'}</button>
       </div>
     </div>
   );

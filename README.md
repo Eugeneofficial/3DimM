@@ -103,6 +103,32 @@ npm run install:all
 | **Node.js 18+** | JavaScript runtime | [nodejs.org](https://nodejs.org/) |
 | **ffmpeg** | Конвертация видео | `winget install ffmpeg` |
 | **yt-dlp** | Скачивание с сайтов | `winget install yt-dlp` |
+| **Python 3.10+** | Для плагинов yt-dlp | [python.org](https://python.org/) |
+
+### Плагины YouTube (рекомендуется)
+
+YouTube требует **PO Token** для скачивания видео. Установите плагины:
+
+```bash
+pip install bgutil-ytdlp-pot-provider yt-dlp-getpot-wpc yt-dlp-ejs
+```
+
+| Плагин | Описание |
+|--------|----------|
+| `bgutil-ytdlp-pot-provider` | Автоматическая генерация PO Token через BgUtils |
+| `yt-dlp-getpot-wpc` | Fallback — генерация PO Token через браузер |
+
+### YouTube cookies (для age-restricted контента)
+
+Для скачивания age-restricted видео нужны cookies из браузера:
+
+1. Откройте **инкогнито-окно** → зайдите на youtube.com
+2. Перейдите на `https://www.youtube.com/robots.txt`
+3. Экспортируйте cookies расширением **"Get cookies.txt LOCALLY"**
+4. Закройте инкогнито-окно
+5. В настройках 3DimM укажите путь к файлу cookies.txt
+
+> **Примечание:** OAuth2 и AgeGate Bypass плагины **не работают** — YouTube заблокировал эти методы.
 
 ---
 

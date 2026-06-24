@@ -8,6 +8,14 @@ const { mkdir, unlink, stat, readdir, writeFile, readFile } = require('fs/promis
 const { createReadStream } = require('fs');
 const { autoUpdater } = require('electron-updater');
 
+let log = console.log.bind(console);
+(async () => {
+  try {
+    const mod = await import('../shared/logger.js');
+    log = mod.log;
+  } catch {}
+})();
+
 let mainWindow;
 let boundPort = null;
 const PREFERRED_PORT = parseInt(process.env.DIMM_PORT || '3001', 10);
@@ -19,6 +27,8 @@ const defaultSettings = {
   downloadsPath: downloadsDir,
   maxConcurrent: 2,
   port: 3001,
+  cookiesPath: '',
+  cookiesFromBrowser: '',
 };
 
 let settings = { ...defaultSettings };
@@ -62,7 +72,7 @@ function resolveFfmpegPath() {
     const staticPath = require('ffmpeg-static');
     return staticPath;
   } catch (err) {
-    console.warn('[electron] ffmpeg-static не найден:', err.message);
+    log('warn', '[electron] ffmpeg-static не найден:', err.message);
     return null;
   }
 }
@@ -82,10 +92,19 @@ async function startServer() {
   const sharedUrl = 'file://' + sharedPath.replace(/\\/g, '/');
 
   const { createVideoRouter, setFfmpegPath, findFreePort } = await import(sharedUrl);
-  const { createYtDlpRouter } = await import(sharedUrl.replace('videoRouter.js', 'ytDlpRouter.js'));
+  const { createYtDlpRouter, setCookiesPath, setCookiesFromBrowser, setYtDlpPath } = await import(sharedUrl.replace('videoRouter.js', 'ytDlpRouter.js'));
 
   const ffmpegPath = resolveFfmpegPath();
   if (ffmpegPath) setFfmpegPath(ffmpegPath);
+
+  const { execSync } = require('child_process');
+  try {
+    const ytdlpPath = execSync('python -c "import shutil; print(shutil.which(\'yt-dlp\'))"', { encoding: 'utf8' }).trim();
+    if (ytdlpPath) setYtDlpPath(ytdlpPath);
+  } catch {}
+
+  if (settings.cookiesPath) setCookiesPath(settings.cookiesPath);
+  else if (settings.cookiesFromBrowser) setCookiesFromBrowser(settings.cookiesFromBrowser);
 
   // Electron-режим: keepDownloads=true — файл остаётся на диске,
   // клиент забирает его через IPC save-file (без двойной буферизации в рендерере).
@@ -132,11 +151,11 @@ async function startServer() {
       const realPort = typeof addr === 'object' && addr ? addr.port : port;
       boundPort = realPort;
       if (realPort !== PREFERRED_PORT) {
-        console.warn(
+        log('warn',
           `[electron] порт ${PREFERRED_PORT} занят — используем резервный ${realPort}`
         );
       }
-      console.log(`Embedded server running on http://localhost:${realPort}`);
+      log('info', `Embedded server running on http://localhost:${realPort}`);
       resolve(realPort);
     });
     // На случай, если listen всё же упадёт синхронно (маловероятно после findFreePort,
@@ -163,7 +182,7 @@ function createWindow(port) {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    icon: join(appRoot, 'icon.png'),
+    icon: require('fs').existsSync(join(appRoot, 'icon.png')) ? join(appRoot, 'icon.png') : undefined,
   });
 
   mainWindow.setMenuBarVisibility(false);
@@ -237,6 +256,8 @@ ipcMain.handle('set-settings', (event, newSettings) => {
   if (newSettings.downloadsPath !== undefined) settings.downloadsPath = newSettings.downloadsPath;
   if (newSettings.maxConcurrent !== undefined) settings.maxConcurrent = newSettings.maxConcurrent;
   if (newSettings.port !== undefined) settings.port = newSettings.port;
+  if (newSettings.cookiesPath !== undefined) settings.cookiesPath = newSettings.cookiesPath;
+  if (newSettings.cookiesFromBrowser !== undefined) settings.cookiesFromBrowser = newSettings.cookiesFromBrowser;
   saveSettings();
   return { ok: true };
 });
@@ -266,7 +287,7 @@ async function bootstrap() {
     createWindow(port);
   } catch (err) {
     const msg = err && err.message ? err.message : String(err);
-    console.error('[electron] failed to start:', msg);
+    log('error', '[electron] failed to start:', msg);
     // Показываем понятный диалог вместо молчаливого краха.
     dialog.showErrorBox(
       '3DimM — не удалось запустить',
@@ -294,7 +315,7 @@ autoUpdater.on('update-downloaded', () => {
 });
 
 autoUpdater.on('error', (err) => {
-  console.error('[updater] error:', err.message);
+  log('error', '[updater] error:', err.message);
 });
 
 app.whenReady().then(() => {
@@ -316,7 +337,7 @@ app.on('window-all-closed', () => {
 // логируется и показывает диалог, а не роняет приложение с «Uncaught Exception».
 process.on('uncaughtException', (err) => {
   const msg = err && err.message ? err.message : String(err);
-  console.error('[electron] uncaughtException:', msg);
+  log('error', '[electron] uncaughtException:', msg);
   try {
     dialog.showErrorBox('3DimM — неожиданная ошибка', msg);
   } catch {}
@@ -324,5 +345,5 @@ process.on('uncaughtException', (err) => {
 
 process.on('unhandledRejection', (err) => {
   const msg = err && err.message ? err.message : String(err);
-  console.error('[electron] unhandledRejection:', msg);
+  log('error', '[electron] unhandledRejection:', msg);
 });

@@ -30,8 +30,6 @@ export const colors = {
   dangerSoft: 'rgba(239, 68, 68, 0.1)',
   warning: '#f59e0b',
   warningSoft: 'rgba(245, 158, 11, 0.1)',
-  premium: '#a855f7',
-  premiumSoft: 'rgba(168, 85, 247, 0.1)',
 };
 
 export const radius = {
@@ -67,14 +65,14 @@ export const transition = {
 };
 
 export const platforms = [
-  { name: 'YouTube', icon: '\uD83C\uDFA5', color: '#FF0000', bg: 'rgba(255,0,0,0.12)' },
-  { name: 'Instagram', icon: '\uD83D\uDCF7', color: '#E4405F', bg: 'rgba(228,64,95,0.12)' },
-  { name: 'TikTok', icon: '\uD83C\uDFB5', color: '#00F2EA', bg: 'rgba(0,242,234,0.12)' },
-  { name: 'Facebook', icon: '\uD83D\uDC68\u200D\uD83D\uDCBB', color: '#1877F2', bg: 'rgba(24,119,242,0.12)' },
-  { name: 'Twitter', icon: '\uD83D\uDC26', color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)' },
-  { name: 'Vimeo', icon: '\u25B6', color: '#1AB7EA', bg: 'rgba(26,183,234,0.12)' },
-  { name: 'Twitch', icon: '\uD83D\uDC7E', color: '#9146FF', bg: 'rgba(145,70,255,0.12)' },
-  { name: '+1000', icon: '\u2728', color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
+  { name: 'YouTube', icon: '\uD83C\uDFA5', color: '#FF0000', bg: 'rgba(255,0,0,0.12)', url: 'https://youtube.com' },
+  { name: 'Instagram', icon: '\uD83D\uDCF7', color: '#E4405F', bg: 'rgba(228,64,95,0.12)', url: 'https://instagram.com' },
+  { name: 'TikTok', icon: '\uD83C\uDFB5', color: '#00F2EA', bg: 'rgba(0,242,234,0.12)', url: 'https://tiktok.com' },
+  { name: 'Facebook', icon: '\uD83D\uDC68\u200D\uD83D\uDCBB', color: '#1877F2', bg: 'rgba(24,119,242,0.12)', url: 'https://facebook.com' },
+  { name: 'Twitter', icon: '\uD83D\uDC26', color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)', url: 'https://x.com' },
+  { name: 'Vimeo', icon: '\u25B6', color: '#1AB7EA', bg: 'rgba(26,183,234,0.12)', url: 'https://vimeo.com' },
+  { name: 'Twitch', icon: '\uD83D\uDC7E', color: '#9146FF', bg: 'rgba(145,70,255,0.12)', url: 'https://twitch.tv' },
+  { name: '+1000', icon: '\u2728', color: '#6366f1', bg: 'rgba(99,102,241,0.12)', url: null },
 ];
 
 export const navItems = [

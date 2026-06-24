@@ -72,7 +72,8 @@ export default function PlatformGrid() {
         {platforms.map((p, idx) => (
           <div
             key={p.name}
-            style={{ ...styles.card, animationDelay: `${idx * 60}ms` }}
+            style={{ ...styles.card, animationDelay: `${idx * 60}ms`, cursor: p.url ? 'pointer' : 'default' }}
+            onClick={() => p.url && window.open(p.url, '_blank')}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = p.color + '50';
               e.currentTarget.style.transform = 'translateY(-3px)';

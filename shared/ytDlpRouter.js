@@ -1,20 +1,53 @@
 import { Router } from 'express';
 import { randomUUID } from 'crypto';
 import { join } from 'path';
-import { mkdir, unlink, stat, readdir } from 'fs/promises';
-import { createReadStream } from 'fs';
+import { mkdir, stat, readdir } from 'fs/promises';
 import { spawn } from 'child_process';
-import { createRequire } from 'module';
+import { assertNotPrivate } from './security.js';
+import { log } from './logger.js';
 
-const require = createRequire(import.meta.url);
-
-let ytDlpPath = 'yt-dlp';
+let ytDlpPath = process.env.YT_DLP_PATH || 'yt-dlp';
 export function setYtDlpPath(p) {
   ytDlpPath = p;
 }
 
+let cookiesPath = null;
+export function setCookiesPath(p) {
+  cookiesPath = p;
+}
+
+let cookiesFromBrowser = null;
+export function setCookiesFromBrowser(p) {
+  cookiesFromBrowser = p;
+}
+
+const BASE_ARGS = [
+  '--no-warnings',
+  '--no-check-certificates',
+  '--js-runtimes', 'nodejs',
+  '--extractor-args', 'youtube:player_client=android_vr',
+];
+
+const YOUTUBE_CLIENTS = [
+  'android_vr',
+  'mweb',
+  'web',
+  'android',
+];
+
+function buildArgs(extra, client) {
+  const args = [...BASE_ARGS];
+  if (client) {
+    args.push('--extractor-args', `youtube:player_client=${client}`);
+  }
+  if (cookiesPath) args.push('--cookies', cookiesPath);
+  else if (cookiesFromBrowser) args.push('--cookies-from-browser', cookiesFromBrowser);
+  return [...args, ...extra];
+}
+
 function runYtDlp(args, timeoutMs = 60000) {
   return new Promise((resolve, reject) => {
+    log('info', 'yt-dlp exec:', ytDlpPath, args.slice(0, 5).join(' '));
     const proc = spawn(ytDlpPath, args, {
       timeout: timeoutMs,
       windowsHide: true,
@@ -30,7 +63,13 @@ function runYtDlp(args, timeoutMs = 60000) {
       if (code === 0) {
         resolve(stdout);
       } else {
-        reject(new Error(stderr || `yt-dlp exited with code ${code}`));
+        const msg = stderr || `yt-dlp exited with code ${code}`;
+        log('error', 'yt-dlp stderr:', msg.slice(0, 500));
+        if (msg.includes('Sign in') || msg.includes('cookies') || msg.includes('PO Token')) {
+          reject(new Error('AUTH_REQUIRED'));
+        } else {
+          reject(new Error(msg));
+        }
       }
     });
 
@@ -44,29 +83,35 @@ function runYtDlpJson(args, timeoutMs = 60000) {
   });
 }
 
-/* ============================ SSRF-защита ============================ */
-
-function isPrivateIP(hostname) {
-  if (!hostname) return false;
-  const h = hostname.toLowerCase();
-  if (h === 'localhost' || h === '0.0.0.0' || h === '::1' || h === '[::1]') return true;
-  if (/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (/^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
-  return false;
+function isYouTubeUrl(url) {
+  try {
+    const h = new URL(url).hostname;
+    return h.includes('youtube.com') || h.includes('youtu.be');
+  } catch { return false; }
 }
 
-function assertNotPrivate(urlStr) {
-  try {
-    const u = new URL(urlStr);
-    if (isPrivateIP(u.hostname)) {
-      throw new Error('Requests to private/local IPs are not allowed');
-    }
-  } catch (e) {
-    throw e;
+function isAuthError(err) {
+  if (!err || !err.message) return false;
+  return err.message === 'AUTH_REQUIRED';
+}
+
+async function runYtDlpWithFallback(args, extra, timeoutMs = 60000) {
+  if (!isYouTubeUrl(extra.find(a => a.startsWith('http')) || '')) {
+    return runYtDlpJson(buildArgs(args), timeoutMs);
   }
+  for (const client of YOUTUBE_CLIENTS) {
+    try {
+      const result = await runYtDlpJson(buildArgs(args, client), timeoutMs);
+      return result;
+    } catch (err) {
+      if (isAuthError(err) && YOUTUBE_CLIENTS.indexOf(client) < YOUTUBE_CLIENTS.length - 1) {
+        log('warn', `YouTube client ${client} requires auth, trying next...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error('YouTube требует авторизацию. Экспортируйте cookies из браузера и укажите путь в настройках.');
 }
 
 /* ============================ Фабрика роутера ============================ */
@@ -81,6 +126,32 @@ export function createYtDlpRouter(opts = {}) {
   const router = Router();
   const downloadProgress = new Map();
 
+  /* -------------------------- /ytdlp-version — проверка версии -------------------------- */
+  router.get('/ytdlp-version', async (req, res) => {
+    try {
+      const version = await runYtDlp(['--version'], 5000);
+      res.json({ version: version.trim() });
+    } catch (err) {
+      res.json({ version: null, error: err.message });
+    }
+  });
+
+  /* -------------------------- /ytdlp-cookies — настройка куки -------------------------- */
+  router.post('/ytdlp-cookies', (req, res) => {
+    const { path, browser } = req.body || {};
+    if (path) {
+      cookiesPath = path;
+      cookiesFromBrowser = null;
+    } else if (browser) {
+      cookiesFromBrowser = browser;
+      cookiesPath = null;
+    } else {
+      cookiesPath = null;
+      cookiesFromBrowser = null;
+    }
+    res.json({ ok: true, cookiesPath, cookiesFromBrowser });
+  });
+
   /* -------------------------- /info — информация о видео -------------------------- */
   router.get('/info', async (req, res) => {
     const { url } = req.query;
@@ -90,12 +161,12 @@ export function createYtDlpRouter(opts = {}) {
     }
 
     try {
-      const info = await runYtDlpJson([
+      const info = await runYtDlpWithFallback([
         '--no-download',
         '--print-json',
         '--no-playlist',
         url,
-      ], 30000);
+      ], [url], 30000);
 
       const formats = (info.formats || []).map((f) => ({
         formatId: f.format_id,
@@ -122,7 +193,7 @@ export function createYtDlpRouter(opts = {}) {
         formats,
       });
     } catch (err) {
-      console.error('yt-dlp info error:', err.message);
+      log('error', 'yt-dlp info error:', err.message);
       res.status(500).json({ error: err.message });
     }
   });
@@ -136,13 +207,13 @@ export function createYtDlpRouter(opts = {}) {
     }
 
     try {
-      const info = await runYtDlpJson([
+      const info = await runYtDlpWithFallback([
         '--no-download',
         '--print-json',
         '--no-playlist',
         '-F',
         url,
-      ], 30000);
+      ], [url], 30000);
 
       const formats = (info.formats || [])
         .filter((f) => f.ext === 'mp4' || f.vcodec !== 'none')
@@ -181,18 +252,17 @@ export function createYtDlpRouter(opts = {}) {
 
     const downloadId = randomUUID();
     const outputTemplate = join(downloadsDir, `${downloadId}.%(ext)s`);
-    const expectedOutput = join(downloadsDir, `${downloadId}.mp4`);
 
     downloadProgress.set(downloadId, { percent: 0, status: 'downloading', speed: null });
 
-    const args = [
+    const args = buildArgs([
       '--no-playlist',
       '--newline',
       '--progress',
       '--progress-template', '%(progress._percent_str)s %(progress._speed_str)s',
       '-o', outputTemplate,
       '--merge-output-format', 'mp4',
-    ];
+    ]);
 
     if (formatId) {
       args.push('-f', `${formatId}+bestaudio/best`);
@@ -201,14 +271,6 @@ export function createYtDlpRouter(opts = {}) {
     }
 
     args.push(url);
-
-    const acq = await Promise.race([
-      new Promise((resolve) => {
-        const timer = setTimeout(() => resolve(false), 5000);
-        return () => clearTimeout(timer);
-      }).then(() => true),
-      new Promise((resolve) => setTimeout(() => resolve(true), 5100)),
-    ]);
 
     try {
       const proc = spawn(ytDlpPath, args, { windowsHide: true });
@@ -275,7 +337,7 @@ export function createYtDlpRouter(opts = {}) {
         size: fileStat.size,
       });
     } catch (err) {
-      console.error('Universal download error:', err.message);
+      log('error', 'Universal download error:', err.message);
       downloadProgress.delete(downloadId);
       if (onDownloadEnd) {
         onDownloadEnd({ url, ok: false, error: err.message });
@@ -353,6 +415,20 @@ export function createYtDlpRouter(opts = {}) {
         'discord.com': 'Discord',
         'twitchclip.com': 'Twitch Clip',
         'clips.twitch.tv': 'Twitch Clip',
+        'bilibili.com': 'Bilibili',
+        'iqiyi.com': 'iQIYI',
+        'youku.com': 'Youku',
+        'le.com': 'LeEco',
+        'mgtv.com': 'Mango TV',
+        'v.qq.com': 'Tencent Video',
+        'tv.sohu.com': 'Sohu Video',
+        'haijiao': 'HaiJiao',
+        'douyin.com': 'Douyin',
+        'kuaishou.com': 'Kuaishou',
+        'ixigua.com': 'Ixigua',
+        'acfun.cn': 'AcFun',
+        'nicovideo.jp': 'Niconico',
+        'bilibili.tv': 'Bilibili TV',
       };
 
       let type = 'unknown';

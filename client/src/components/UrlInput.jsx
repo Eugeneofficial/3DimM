@@ -355,6 +355,7 @@ export default function UrlInput({ onLoad }) {
         return;
       }
       if (detection.type === 'supported-site' || detection.type === 'webpage') {
+        let ytdlpError = null;
         try {
           const info = await getVideoInfo(trimmed);
           setVideoInfo(info);
@@ -362,8 +363,33 @@ export default function UrlInput({ onLoad }) {
             const filtered = info.formats.filter((f) => f.ext === 'mp4' || f.vcodec !== 'none');
             setFormats(filtered.length > 0 ? filtered : info.formats);
           }
+          saveToHistory(trimmed);
+          setHistory(loadHistory());
+          setLoading(false);
+          return;
         } catch (err) {
-          showToast('\u26A0\uFE0F ' + err.message, 'error');
+          ytdlpError = err.message;
+        }
+        try {
+          const resp = await fetch(`/api/extract?url=${encodeURIComponent(trimmed)}`);
+          const data = await resp.json();
+          if (data.direct && data.urls && data.urls.length > 0) {
+            saveToHistory(trimmed);
+            setHistory(loadHistory());
+            onLoad(data.urls[0], trimmed);
+            setLoading(false);
+            return;
+          }
+          if (data.urls && data.urls.length > 0) {
+            setResults(data.urls.map((u) => ({ url: u, source: trimmed })));
+            saveToHistory(trimmed);
+            setHistory(loadHistory());
+            setLoading(false);
+            return;
+          }
+          showToast('\u26A0\uFE0F ' + (ytdlpError || 'Не удалось найти видео'), 'error');
+        } catch {
+          showToast('\u26A0\uFE0F ' + (ytdlpError || 'Не удалось найти видео'), 'error');
         }
         saveToHistory(trimmed);
         setHistory(loadHistory());

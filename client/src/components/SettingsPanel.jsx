@@ -97,7 +97,7 @@ const styles = {
 };
 
 export default function SettingsPanel() {
-  const [settings, setSettings] = useState({ downloadsPath: '', maxConcurrent: 2, port: 3001 });
+  const [settings, setSettings] = useState({ downloadsPath: '', maxConcurrent: 2, port: 3001, cookiesPath: '', cookiesFromBrowser: '' });
   const isElectron = useAppStore((s) => s.isElectron);
   const showToast = useToast();
 
@@ -144,7 +144,54 @@ export default function SettingsPanel() {
         <input type="number" value={settings.port} onChange={(e) => setSettings((s) => ({ ...s, port: parseInt(e.target.value) || 3001 }))} style={styles.input} min={1024} max={65535} />
       </div>
 
+      <div style={{ ...styles.row, flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+        <span style={styles.label}><span style={styles.labelIcon}>{'\uD83C\uDF6A'}</span>{'\u041A\u0443\u043A\u0438 YouTube (Netscape format .txt)'}</span>
+        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+          <input
+            type="text"
+            value={settings.cookiesPath || ''}
+            onChange={(e) => setSettings((s) => ({ ...s, cookiesPath: e.target.value, cookiesFromBrowser: '' }))}
+            placeholder="C:\Users\...\cookies.txt"
+            style={{ ...styles.input, flex: 2 }}
+          />
+          <select
+            value={settings.cookiesFromBrowser || ''}
+            onChange={(e) => setSettings((s) => ({ ...s, cookiesFromBrowser: e.target.value, cookiesPath: '' }))}
+            style={{ ...styles.select, flex: 1 }}
+          >
+            <option value="">{'\u0411\u0440\u0430\u0443\u0437\u0435\u0440'}</option>
+            <option value="chrome">Chrome</option>
+            <option value="firefox">Firefox</option>
+            <option value="edge">Edge</option>
+            <option value="opera">Opera</option>
+          </select>
+        </div>
+        <div style={{ fontSize: '11px', color: colors.textFaint }}>
+          Для YouTube авторизация. Экспортируйте cookies из браузера или выберите браузер выше.
+        </div>
+      </div>
+
       <button onClick={handleSave} style={styles.saveBtn}>{'\uD83D\uDCBE \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C'}</button>
+
+      <div style={{ ...styles.row, marginTop: '12px', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+        <span style={styles.label}><span style={styles.labelIcon}>{'\uD83D\uDD27'}</span>{'yt-dlp'}</span>
+        <button
+          onClick={async () => {
+            try {
+              const resp = await fetch('/api/ytdlp-version');
+              const data = await resp.json();
+              if (data.version) showToast(`yt-dlp ${data.version}`, 'success');
+              else showToast('yt-dlp не найден', 'error');
+            } catch { showToast('\u274C \u041E\u0448\u0438\u0431\u043A\u0430', 'error'); }
+          }}
+          style={styles.browseBtn}
+        >
+          {'\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0432\u0435\u0440\u0441\u0438\u044E'}
+        </button>
+        <div style={{ fontSize: '11px', color: colors.textFaint }}>
+          Для YouTube рекомендуется последняя версия. Обновите: pip install -U yt-dlp
+        </div>
+      </div>
     </div>
   );
 }

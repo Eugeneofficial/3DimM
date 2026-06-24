@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://* data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' http://localhost:* ws://localhost:*" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' http://localhost:* https://* data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' https://* data: blob:" />
     <title>3DimM \u2014 Video Downloader</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dplayer/dist/DPlayer.min.css" />
     <style>
@@ -30,6 +30,10 @@
       input:focus, select:focus, textarea:focus { outline: none; }
       button { font-family: inherit; }
       button:active { transform: scale(0.98); }
+      @media (max-width: 860px) {
+        .app-sidebar { display: none !important; }
+        .app-main { margin-left: 0 !important; padding: 20px !important; }
+      }
     </style>
     <script>
       window.onerror = function(msg, url, line, col, err) {

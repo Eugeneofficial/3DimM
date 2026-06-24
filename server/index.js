@@ -4,8 +4,9 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readdir, unlink, stat } from 'fs/promises';
 import { createVideoRouter, setFfmpegPath, findFreePort, DEFAULT_PORT } from '../shared/videoRouter.js';
-import { createYtDlpRouter } from '../shared/ytDlpRouter.js';
+import { createYtDlpRouter, setYtDlpPath } from '../shared/ytDlpRouter.js';
 import { log } from '../shared/logger.js';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,6 +17,16 @@ try {
   if (staticPath) setFfmpegPath(staticPath);
 } catch {
   log('warn', 'ffmpeg-static не найден, используется системный ffmpeg');
+}
+
+try {
+  const ytdlpPath = execSync('python -c "import shutil; print(shutil.which(\'yt-dlp\'))"', { encoding: 'utf8' }).trim();
+  if (ytdlpPath) {
+    setYtDlpPath(ytdlpPath);
+    log('info', `yt-dlp found at: ${ytdlpPath}`);
+  }
+} catch {
+  log('warn', 'yt-dlp не найден через Python, используется системный');
 }
 
 async function cleanStaleDownloads(dir) {
