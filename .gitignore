@@ -35,3 +35,10 @@ logs/
 # OS
 desktop.ini
 Thumbs.db
+
+# Dev artifacts
+SESSION.md
+generate_icons.py
+icon.png
+icon.ico
+icon.icns
