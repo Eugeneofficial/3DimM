@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://* data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' http://localhost:* ws://localhost:*" />
+    <title>3DimM \u2014 Video Downloader</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dplayer/dist/DPlayer.min.css" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { background: #0b0e1a; min-height: 100vh; }
+      body { overflow-x: hidden; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; color: #f1f5f9; }
+      ::selection { background: rgba(99, 102, 241, 0.3); color: #f1f5f9; }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.3); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.5); }
+      .drag-region { -webkit-app-region: drag; height: 38px; position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: linear-gradient(180deg, rgba(11,14,26,0.8) 0%, transparent 100%); }
+      @keyframes dimm-spin { to { transform: rotate(360deg); } }
+      @keyframes dimm-toast-in { from { opacity: 0; transform: translateX(40px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+      @keyframes dimm-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes dimm-slide-up { from { opacity: 0; transform: translateY(16px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      @keyframes dimm-scale-in { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+      @keyframes dimm-float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+      @keyframes dimm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+      @keyframes dimm-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+      .dplayer { border-radius: 16px; overflow: hidden; background: #000; border: 1px solid rgba(55,65,81,0.4); }
+      .dplayer .dplayer-video-wrap { border-radius: 16px; overflow: hidden; }
+      .dplayer .dplayer-controller { background: linear-gradient(transparent, rgba(0,0,0,0.8)); }
+      input:focus, select:focus, textarea:focus { outline: none; }
+      button { font-family: inherit; }
+      button:active { transform: scale(0.98); }
+    </style>
+    <script>
+      window.onerror = function(msg, url, line, col, err) {
+        document.getElementById('root').innerHTML =
+          '<div style="padding:40px;color:#f43f5e;font-family:monospace;font-size:14px;white-space:pre-wrap;">' +
+          '<b>JS Error:</b>\n' + String(msg) + '\n' + (url||'') + ':' + (line||'') + '\n' +
+          (err && err.stack || '') + '</div>';
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        document.getElementById('root').innerHTML =
+          '<div style="padding:40px;color:#f43f5e;font-family:monospace;font-size:14px;white-space:pre-wrap;">' +
+          '<b>Unhandled:</b>\n' + (e.reason && e.reason.stack || String(e.reason)) + '</div>';
+      });
+    </script>
+  </head>
+  <body>
+    <div class="drag-region"></div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

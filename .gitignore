@@ -1,0 +1,37 @@
+node_modules/
+dist/
+dist-electron/
+*.log
+.DS_Store
+Thumbs.db
+
+# Electron
+.env
+.env.local
+
+# Временные загрузки сервера
+server/downloads/*
+!server/downloads/.gitkeep
+client/downloads/*
+!client/downloads/.gitkeep
+
+# Settings (user-specific)
+settings.json
+
+# Logs
+logs/
+*.log
+
+# Build artifacts
+*.tgz
+*.tar.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+desktop.ini
+Thumbs.db

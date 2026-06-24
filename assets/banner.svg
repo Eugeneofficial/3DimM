@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0b0e1a"/>
+      <stop offset="50%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#0b0e1a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="400" y1="150" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#a855f7" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ec4899" stop-opacity="0.05"/>
+    </linearGradient>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#6366f1" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Glow orbs -->
+  <circle cx="300" cy="200" r="200" fill="url(#glow)" filter="url(#blur)"/>
+  <circle cx="900" cy="400" r="150" fill="url(#glow)" filter="url(#blur)"/>
+
+  <!-- Grid pattern -->
+  <g opacity="0.05" stroke="#6366f1" stroke-width="0.5">
+    <line x1="0" y1="100" x2="1200" y2="100"/>
+    <line x1="0" y1="200" x2="1200" y2="200"/>
+    <line x1="0" y1="300" x2="1200" y2="300"/>
+    <line x1="0" y1="400" x2="1200" y2="400"/>
+    <line x1="0" y1="500" x2="1200" y2="500"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  </g>
+
+  <!-- Download icon -->
+  <g transform="translate(530, 80)" filter="url(#shadow)">
+    <rect x="0" y="0" width="140" height="140" rx="28" fill="url(#accent)"/>
+    <path d="M70 35 L70 95 M45 75 L70 100 L95 75" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <line x1="40" y1="115" x2="100" y2="115" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Title -->
+  <text x="600" y="300" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="#f1f5f9" letter-spacing="-2">
+    3Dim<tspan fill="url(#accent)">M</tspan>
+  </text>
+
+  <!-- Subtitle -->
+  <text x="600" y="360" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#94a3b8" letter-spacing="1">
+    Universal Video Downloader
+  </text>
+
+  <!-- Feature badges -->
+  <g transform="translate(200, 420)">
+    <rect x="0" y="0" width="160" height="44" rx="22" fill="rgba(99,102,241,0.12)" stroke="rgba(99,102,241,0.3)" stroke-width="1"/>
+    <text x="80" y="28" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#818cf8">1000+ Sites</text>
+
+    <rect x="180" y="0" width="140" height="44" rx="22" fill="rgba(168,85,247,0.12)" stroke="rgba(168,85,247,0.3)" stroke-width="1"/>
+    <text x="250" y="28" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#c084fc">8K Quality</text>
+
+    <rect x="340" y="0" width="160" height="44" rx="22" fill="rgba(34,197,94,0.12)" stroke="rgba(34,197,94,0.3)" stroke-width="1"/>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#4ade80">Free &amp; Open Source</text>
+
+    <rect x="520" y="0" width="140" height="44" rx="22" fill="rgba(236,72,153,0.12)" stroke="rgba(236,72,153,0.3)" stroke-width="1"/>
+    <text x="590" y="28" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#f472b6">Electron App</text>
+  </g>
+
+  <!-- Platform icons -->
+  <g transform="translate(250, 510)" opacity="0.7">
+    <text x="0" y="20" font-family="system-ui" font-size="28">🎬</text>
+    <text x="60" y="20" font-family="system-ui" font-size="28">📸</text>
+    <text x="120" y="20" font-family="system-ui" font-size="28">🎵</text>
+    <text x="180" y="20" font-family="system-ui" font-size="28">👁️</text>
+    <text x="240" y="20" font-family="system-ui" font-size="28">🐦</text>
+    <text x="300" y="20" font-family="system-ui" font-size="28">▶️</text>
+    <text x="360" y="20" font-family="system-ui" font-size="28">🎮</text>
+    <text x="420" y="20" font-family="system-ui" font-size="28">💬</text>
+    <text x="480" y="20" font-family="system-ui" font-size="28">🔴</text>
+    <text x="540" y="20" font-family="system-ui" font-size="28">🌐</text>
+  </g>
+
+  <!-- Tech stack -->
+  <g transform="translate(600, 570)">
+    <text x="0" y="20" text-anchor="middle" font-family="monospace" font-size="13" fill="#475569" letter-spacing="2">
+      React • Express • Electron • yt-dlp • ffmpeg
+    </text>
+  </g>
+</svg>
